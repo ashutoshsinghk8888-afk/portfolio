@@ -3,458 +3,309 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Task Ledger — To-Do List</title>
+<title>Real-Time Weather Dashboard</title>
 <style>
-  :root{
-    --ink:#1b1f27;
-    --paper:#f6f4ef;
-    --card:#ffffff;
-    --rule:#dedad0;
-    --accent:#3a5a9c;
-    --accent-soft:#e8edf8;
-    --done:#6b8f71;
-    --danger:#b5483f;
-    --mono: 'Courier New', monospace;
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--paper);
-    font-family:'Segoe UI', system-ui, sans-serif;
-    color:var(--ink);
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    padding:32px 16px;
+  .container {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    padding: 30px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   }
-  .ledger{
-    width:100%;
-    max-width:560px;
+  h1 {
+    text-align: center;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+    font-size: 24px;
   }
-  header{
-    border-bottom:2px solid var(--ink);
-    padding-bottom:14px;
-    margin-bottom:20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
+  .search-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
   }
-  header h1{
-    font-size:1.6rem;
-    margin:0;
-    letter-spacing:-0.5px;
+  .search-box input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
   }
-  header span{
-    font-family:var(--mono);
-    font-size:0.75rem;
-    color:#777;
+  .search-box input:focus { border-color: #4facfe; }
+  .search-box button {
+    padding: 12px 18px;
+    background: #1e3a8a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
   }
-  .entry-row{
-    display:flex;
-    gap:8px;
-    margin-bottom:18px;
+  .search-box button:hover { background: #2563eb; }
+  #status {
+    text-align: center;
+    margin: 15px 0;
+    color: #555;
+    font-size: 14px;
+    min-height: 20px;
   }
-  #taskInput{
-    flex:1;
-    padding:12px 14px;
-    border:1.5px solid var(--ink);
-    border-radius:6px;
-    font-size:0.95rem;
-    background:var(--card);
+  .error {
+    color: #d32f2f !important;
+    background: #ffebee;
+    padding: 10px;
+    border-radius: 8px;
   }
-  #taskInput:focus{
-    outline:none;
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px var(--accent-soft);
+  #weatherCard {
+    display: none;
+    text-align: center;
   }
-  #addBtn{
-    padding:12px 20px;
-    background:var(--ink);
-    color:#fff;
-    border:none;
-    border-radius:6px;
-    font-size:0.95rem;
-    cursor:pointer;
+  #weatherCard .city {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1e3a8a;
   }
-  #addBtn:hover{ background:var(--accent); }
-
-  .filters{
-    display:flex;
-    gap:6px;
-    margin-bottom:16px;
-    font-family:var(--mono);
-    font-size:0.8rem;
+  #weatherCard .temp {
+    font-size: 50px;
+    font-weight: bold;
+    color: #2563eb;
+    margin: 10px 0;
   }
-  .filter-btn{
-    flex:1;
-    padding:8px 0;
-    border:1px solid var(--rule);
-    background:var(--card);
-    cursor:pointer;
-    border-radius:4px;
-    color:#555;
+  #weatherCard .desc {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 15px;
   }
-  .filter-btn.active{
-    background:var(--ink);
-    color:#fff;
-    border-color:var(--ink);
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
   }
-
-  #taskList{
-    list-style:none;
-    margin:0;
-    padding:0;
-    border-top:1px solid var(--rule);
+  .metric-box {
+    background: #f0f7ff;
+    border-radius: 12px;
+    padding: 14px;
   }
-  .task-item{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:12px 4px;
-    border-bottom:1px solid var(--rule);
-    background:var(--card);
+  .metric-box .label {
+    font-size: 12px;
+    color: #888;
   }
-  .task-item.editing{
-    background:var(--accent-soft);
+  .metric-box .value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1e3a8a;
+    margin-top: 4px;
   }
-  .check{
-    width:20px;
-    height:20px;
-    border:1.5px solid var(--ink);
-    border-radius:50%;
-    flex-shrink:0;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:0.7rem;
+  .loader {
+    border: 4px solid #e0e0e0;
+    border-top: 4px solid #2563eb;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 15px auto;
+    display: none;
   }
-  .task-item.completed .check{
-    background:var(--done);
-    border-color:var(--done);
-    color:#fff;
-  }
-  .task-text{
-    flex:1;
-    font-size:0.95rem;
-    word-break:break-word;
-    cursor:text;
-  }
-  .task-item.completed .task-text{
-    text-decoration:line-through;
-    color:#999;
-  }
-  .task-text[contenteditable="true"]{
-    outline:none;
-    border-bottom:1px dashed var(--accent);
-  }
-  .task-actions{
-    display:flex;
-    gap:6px;
-  }
-  .icon-btn{
-    background:none;
-    border:none;
-    cursor:pointer;
-    font-size:0.95rem;
-    padding:4px 6px;
-    border-radius:4px;
-    color:#777;
-  }
-  .icon-btn:hover{ background:var(--rule); }
-  .icon-btn.delete:hover{ color:var(--danger); }
-
-  .empty-state{
-    text-align:center;
-    padding:40px 0;
-    color:#999;
-    font-family:var(--mono);
-    font-size:0.85rem;
-  }
-
-  footer{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:16px;
-    font-family:var(--mono);
-    font-size:0.75rem;
-    color:#777;
-  }
-  #clearCompleted{
-    background:none;
-    border:none;
-    color:var(--danger);
-    cursor:pointer;
-    font-family:var(--mono);
-    font-size:0.75rem;
-    text-decoration:underline;
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div class="ledger">
-  <header>
-    <h1>Task Ledger</h1>
-    <span id="dateTag"></span>
-  </header>
+<div class="container">
+  <h1>🌦️ Weather Dashboard</h1>
 
-  <div class="entry-row">
-    <input type="text" id="taskInput" placeholder="What needs doing?" maxlength="120">
-    <button id="addBtn">Add</button>
+  <div class="search-box">
+    <input type="text" id="cityInput" placeholder="Enter city name..." />
+    <button id="searchBtn">Search</button>
   </div>
 
-  <div class="filters">
-    <button class="filter-btn active" data-filter="all">All</button>
-    <button class="filter-btn" data-filter="active">Active</button>
-    <button class="filter-btn" data-filter="completed">Completed</button>
+  <div class="loader" id="loader"></div>
+  <div id="status"></div>
+
+  <div id="weatherCard">
+    <div class="city" id="cityName"></div>
+    <div class="temp" id="temperature"></div>
+    <div class="desc" id="description"></div>
+    <div class="metrics">
+      <div class="metric-box">
+        <div class="label">Humidity</div>
+        <div class="value" id="humidity"></div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Wind Speed</div>
+        <div class="value" id="windSpeed"></div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Feels Like</div>
+        <div class="value" id="feelsLike"></div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Pressure</div>
+        <div class="value" id="pressure"></div>
+      </div>
+    </div>
   </div>
-
-  <ul id="taskList"></ul>
-
-  <footer>
-    <span id="countTag">0 items</span>
-    <button id="clearCompleted">Clear completed</button>
-  </footer>
 </div>
 
 <script>
-(function(){
-  const STORAGE_KEY = 'taskLedger.tasks.v1';
-  const taskInput   = document.getElementById('taskInput');
-  const addBtn      = document.getElementById('addBtn');
-  const taskList    = document.getElementById('taskList');
-  const countTag    = document.getElementById('countTag');
-  const dateTag     = document.getElementById('dateTag');
-  const clearBtn    = document.getElementById('clearCompleted');
-  const filterBtns  = document.querySelectorAll('.filter-btn');
+  const cityInput = document.getElementById('cityInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const statusEl = document.getElementById('status');
+  const loaderEl = document.getElementById('loader');
+  const weatherCard = document.getElementById('weatherCard');
 
-  let tasks = [];
-  let currentFilter = 'all';
+  // Weather code -> description mapping (Open-Meteo WMO codes)
+  const weatherDescriptions = {
+    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Freezing fog",
+    51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
+    61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
+    71: "Light snow", 73: "Moderate snow", 75: "Heavy snow",
+    80: "Rain showers", 81: "Moderate showers", 82: "Violent showers",
+    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Severe thunderstorm"
+  };
 
-  dateTag.textContent = new Date().toLocaleDateString(undefined, {
-    year:'numeric', month:'short', day:'numeric'
-  });
+  function showLoading(isLoading) {
+    loaderEl.style.display = isLoading ? 'block' : 'none';
+  }
 
-  // ---------- Persistence ----------
-  function loadTasks(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      tasks = raw ? JSON.parse(raw) : [];
-    }catch(e){
-      console.error('Failed to load tasks:', e);
-      tasks = [];
+  function showStatus(message, isError = false) {
+    statusEl.textContent = message;
+    statusEl.className = isError ? 'error' : '';
+  }
+
+  function clearStatus() {
+    statusEl.textContent = '';
+    statusEl.className = '';
+  }
+
+  // Step 1: Get latitude/longitude from city name (Geocoding API)
+  async function getCoordinates(city) {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Geocoding request failed (status ${response.status})`);
     }
-  }
 
-  function saveTasks(){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    }catch(e){
-      console.error('Failed to save tasks:', e);
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      throw new Error(`City "${city}" not found. Please check spelling.`);
     }
+
+    const place = data.results[0];
+    return {
+      lat: place.latitude,
+      lon: place.longitude,
+      name: place.name,
+      country: place.country || ''
+    };
   }
 
-  // ---------- ID generator ----------
-  function makeId(){
-    return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-  }
+  // Step 2: Get weather data using coordinates
+  async function getWeatherData(lat, lon) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code,pressure_msl&timezone=auto`;
+    const response = await fetch(url);
 
-  // ---------- CRUD operations ----------
-  function addTask(text){
-    const trimmed = text.trim();
-    if(!trimmed) return;
-    tasks.unshift({
-      id: makeId(),
-      text: trimmed,
-      completed: false,
-      createdAt: Date.now()
-    });
-    saveTasks();
-    render();
-  }
-
-  function deleteTask(id){
-    tasks = tasks.filter(t => t.id !== id);
-    saveTasks();
-    render();
-  }
-
-  function toggleTask(id){
-    const task = tasks.find(t => t.id === id);
-    if(task){
-      task.completed = !task.completed;
-      saveTasks();
-      render();
+    if (!response.ok) {
+      throw new Error(`Weather request failed (status ${response.status})`);
     }
+
+    const data = await response.json();
+
+    if (!data.current) {
+      throw new Error('Unexpected response format from weather server.');
+    }
+
+    return data.current;
   }
 
-  function updateTaskText(id, newText){
-    const trimmed = newText.trim();
-    const task = tasks.find(t => t.id === id);
-    if(!task) return;
-    if(!trimmed){
-      deleteTask(id);
+  // Step 3: Render weather data on dashboard
+  function renderWeather(locationInfo, current) {
+    document.getElementById('cityName').textContent =
+      `${locationInfo.name}${locationInfo.country ? ', ' + locationInfo.country : ''}`;
+
+    document.getElementById('temperature').textContent =
+      `${Math.round(current.temperature_2m)}°C`;
+
+    const desc = weatherDescriptions[current.weather_code] || 'Unknown conditions';
+    document.getElementById('description').textContent = desc;
+
+    document.getElementById('humidity').textContent =
+      `${current.relative_humidity_2m}%`;
+
+    document.getElementById('windSpeed').textContent =
+      `${current.wind_speed_10m} km/h`;
+
+    document.getElementById('feelsLike').textContent =
+      `${Math.round(current.apparent_temperature)}°C`;
+
+    document.getElementById('pressure').textContent =
+      `${Math.round(current.pressure_msl)} hPa`;
+
+    weatherCard.style.display = 'block';
+  }
+
+  // Main async function tying everything together
+  async function fetchWeatherForCity(city) {
+    if (!city || city.trim() === '') {
+      showStatus('Please enter a city name.', true);
       return;
     }
-    task.text = trimmed;
-    saveTasks();
-    render();
-  }
 
-  function clearCompleted(){
-    tasks = tasks.filter(t => !t.completed);
-    saveTasks();
-    render();
-  }
+    weatherCard.style.display = 'none';
+    clearStatus();
+    showLoading(true);
 
-  // ---------- Filtering ----------
-  function getVisibleTasks(){
-    if(currentFilter === 'active')    return tasks.filter(t => !t.completed);
-    if(currentFilter === 'completed') return tasks.filter(t => t.completed);
-    return tasks;
-  }
-
-  // ---------- Rendering ----------
-  function render(){
-    const visible = getVisibleTasks();
-    taskList.innerHTML = '';
-
-    if(visible.length === 0){
-      const empty = document.createElement('li');
-      empty.className = 'empty-state';
-      empty.textContent = tasks.length === 0
-        ? 'No tasks yet. Add your first one above.'
-        : 'Nothing here for this filter.';
-      taskList.appendChild(empty);
-    } else {
-      visible.forEach(task => {
-        const li = document.createElement('li');
-        li.className = 'task-item' + (task.completed ? ' completed' : '');
-        li.dataset.id = task.id;
-
-        const check = document.createElement('div');
-        check.className = 'check';
-        check.dataset.action = 'toggle';
-        check.textContent = task.completed ? '✓' : '';
-
-        const span = document.createElement('span');
-        span.className = 'task-text';
-        span.dataset.action = 'edit-start';
-        span.textContent = task.text;
-
-        const actions = document.createElement('div');
-        actions.className = 'task-actions';
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'icon-btn';
-        editBtn.dataset.action = 'edit-start';
-        editBtn.textContent = '✎';
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'icon-btn delete';
-        delBtn.dataset.action = 'delete';
-        delBtn.textContent = '🗑';
-
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-
-        li.appendChild(check);
-        li.appendChild(span);
-        li.appendChild(actions);
-        taskList.appendChild(li);
-      });
-    }
-
-    const remaining = tasks.filter(t => !t.completed).length;
-    countTag.textContent = `${remaining} of ${tasks.length} remaining`;
-  }
-
-  // ---------- Inline editing ----------
-  function startEdit(li, span, task){
-    li.classList.add('editing');
-    span.contentEditable = 'true';
-    span.focus();
-
-    const range = document.createRange();
-    range.selectNodeContents(span);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-
-    function finish(){
-      span.contentEditable = 'false';
-      li.classList.remove('editing');
-      updateTaskText(task.id, span.textContent);
-    }
-
-    span.addEventListener('blur', finish, { once:true });
-    span.addEventListener('keydown', function(e){
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        span.blur();
+    try {
+      const location = await getCoordinates(city.trim());
+      const current = await getWeatherData(location.lat, location.lon);
+      renderWeather(location, current);
+      clearStatus();
+    } catch (error) {
+      // Comprehensive error handling for failed network requests
+      console.error('Weather fetch error:', error);
+      if (error.message.includes('fetch') || error.name === 'TypeError') {
+        showStatus('Network error. Please check your internet connection.', true);
+      } else {
+        showStatus(error.message, true);
       }
-      if(e.key === 'Escape'){
-        span.textContent = task.text;
-        span.blur();
-      }
-    });
+    } finally {
+      showLoading(false);
+    }
   }
 
-  // ---------- Event delegation: list clicks ----------
-  taskList.addEventListener('click', function(e){
-    const actionEl = e.target.closest('[data-action]');
-    if(!actionEl) return;
-    const li = e.target.closest('.task-item');
-    if(!li) return;
-    const id = li.dataset.id;
-    const task = tasks.find(t => t.id === id);
-    if(!task) return;
+  searchBtn.addEventListener('click', () => {
+    fetchWeatherForCity(cityInput.value);
+  });
 
-    const action = actionEl.dataset.action;
-    if(action === 'toggle'){
-      toggleTask(id);
-    } else if(action === 'delete'){
-      deleteTask(id);
-    } else if(action === 'edit-start'){
-      const span = li.querySelector('.task-text');
-      startEdit(li, span, task);
+  cityInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      fetchWeatherForCity(cityInput.value);
     }
   });
 
-  // ---------- Add task ----------
-  addBtn.addEventListener('click', function(){
-    addTask(taskInput.value);
-    taskInput.value = '';
-    taskInput.focus();
+  // Load default city on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    fetchWeatherForCity('Delhi');
   });
-
-  taskInput.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){
-      addTask(taskInput.value);
-      taskInput.value = '';
-    }
-  });
-
-  // ---------- Filters ----------
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', function(){
-      filterBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      render();
-    });
-  });
-
-  // ---------- Clear completed ----------
-  clearBtn.addEventListener('click', clearCompleted);
-
-  // ---------- Init ----------
-  loadTasks();
-  render();
-})();
 </script>
 
 </body>
 </html>
+
+
+
+
