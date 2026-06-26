@@ -3,309 +3,465 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Real-Time Weather Dashboard</title>
+<title>ShopEase - Product Catalog</title>
 <style>
+  :root {
+    --primary: #2563eb;
+    --dark: #1e293b;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: var(--bg);
+    color: var(--dark);
     min-height: 100vh;
+  }
+
+  /* ---------- Navbar (shared across all routes) ---------- */
+  header {
+    background: var(--dark);
+    color: #fff;
+    padding: 14px 20px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
-  .container {
-    background: rgba(255,255,255,0.95);
-    border-radius: 20px;
-    padding: 30px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  .logo { font-size: 20px; font-weight: bold; cursor: pointer; }
+  .logo span { color: #60a5fa; }
+  nav { display: flex; gap: 18px; align-items: center; }
+  nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
   }
-  h1 {
-    text-align: center;
-    color: #1e3a8a;
-    margin-bottom: 20px;
-    font-size: 24px;
+  nav a.active, nav a:hover { color: #fff; }
+  #cartBadge {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 4px;
   }
-  .search-box {
+
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ---------- Home / Catalog view ---------- */
+  .search-bar {
     display: flex;
     gap: 8px;
     margin-bottom: 20px;
   }
-  .search-box input {
-    flex: 1;
-    padding: 12px 14px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 15px;
-    outline: none;
-  }
-  .search-box input:focus { border-color: #4facfe; }
-  .search-box button {
-    padding: 12px 18px;
-    background: #1e3a8a;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  .search-box button:hover { background: #2563eb; }
-  #status {
-    text-align: center;
-    margin: 15px 0;
-    color: #555;
-    font-size: 14px;
-    min-height: 20px;
-  }
-  .error {
-    color: #d32f2f !important;
-    background: #ffebee;
-    padding: 10px;
+  .search-bar input, .search-bar select {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
     border-radius: 8px;
+    font-size: 14px;
   }
-  #weatherCard {
-    display: none;
-    text-align: center;
+  .search-bar input { flex: 1; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
   }
-  #weatherCard .city {
-    font-size: 22px;
-    font-weight: bold;
-    color: #1e3a8a;
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
   }
-  #weatherCard .temp {
-    font-size: 50px;
-    font-weight: bold;
-    color: #2563eb;
-    margin: 10px 0;
+  .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+  .card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: #eee;
+    display: block;
   }
-  #weatherCard .desc {
-    font-size: 16px;
-    color: #555;
-    margin-bottom: 15px;
+  .card-body { padding: 12px; }
+  .card-body .cat { font-size: 11px; color: var(--primary); text-transform: uppercase; font-weight: bold; }
+  .card-body h3 { font-size: 14px; margin: 6px 0; min-height: 38px; }
+  .card-body .price { font-weight: bold; color: var(--dark); font-size: 16px; }
+  .card-body button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
   }
-  .metrics {
+  .card-body button:hover { background: #1d4ed8; }
+
+  /* ---------- Product Detail view ---------- */
+  .detail {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 15px;
+    gap: 30px;
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid var(--border);
   }
-  .metric-box {
-    background: #f0f7ff;
-    border-radius: 12px;
-    padding: 14px;
+  .detail img { width: 100%; border-radius: 12px; object-fit: cover; }
+  .detail h2 { margin-bottom: 8px; }
+  .detail .price { font-size: 26px; color: var(--primary); font-weight: bold; margin: 10px 0; }
+  .detail .desc { color: #555; line-height: 1.5; margin-bottom: 16px; }
+  .detail .qty-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .detail .qty-row button {
+    width: 32px; height: 32px; border: 1px solid var(--border);
+    background: #fff; border-radius: 6px; cursor: pointer; font-size: 16px;
   }
-  .metric-box .label {
-    font-size: 12px;
-    color: #888;
+  .back-link { display: inline-block; margin-bottom: 16px; color: var(--primary); cursor: pointer; font-size: 14px; }
+  .add-btn {
+    padding: 12px 22px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
   }
-  .metric-box .value {
-    font-size: 18px;
+
+  /* ---------- Cart view ---------- */
+  .cart-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .cart-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+  .cart-item .info { flex: 1; }
+  .cart-item .info h4 { font-size: 14px; }
+  .cart-item .info .price { color: var(--primary); font-weight: bold; }
+  .cart-item .remove { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; }
+  .cart-total {
+    text-align: right;
+    font-size: 20px;
     font-weight: bold;
-    color: #1e3a8a;
-    margin-top: 4px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid var(--border);
   }
+  .empty-state { text-align: center; padding: 60px 20px; color: #888; }
+
+  /* ---------- Utility ---------- */
   .loader {
     border: 4px solid #e0e0e0;
-    border-top: 4px solid #2563eb;
+    border-top: 4px solid var(--primary);
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 15px auto;
-    display: none;
+    width: 32px; height: 32px;
+    animation: spin 0.8s linear infinite;
+    margin: 50px auto;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity .3s;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 640px) {
+    .detail { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>🌦️ Weather Dashboard</h1>
+<header>
+  <div class="logo" onclick="navigateTo('/')">Shop<span>Ease</span></div>
+  <nav>
+    <a onclick="navigateTo('/')" id="navHome">Home</a>
+    <a onclick="navigateTo('/cart')" id="navCart">Cart<span id="cartBadge">0</span></a>
+  </nav>
+</header>
 
-  <div class="search-box">
-    <input type="text" id="cityInput" placeholder="Enter city name..." />
-    <button id="searchBtn">Search</button>
-  </div>
-
-  <div class="loader" id="loader"></div>
-  <div id="status"></div>
-
-  <div id="weatherCard">
-    <div class="city" id="cityName"></div>
-    <div class="temp" id="temperature"></div>
-    <div class="desc" id="description"></div>
-    <div class="metrics">
-      <div class="metric-box">
-        <div class="label">Humidity</div>
-        <div class="value" id="humidity"></div>
-      </div>
-      <div class="metric-box">
-        <div class="label">Wind Speed</div>
-        <div class="value" id="windSpeed"></div>
-      </div>
-      <div class="metric-box">
-        <div class="label">Feels Like</div>
-        <div class="value" id="feelsLike"></div>
-      </div>
-      <div class="metric-box">
-        <div class="label">Pressure</div>
-        <div class="value" id="pressure"></div>
-      </div>
-    </div>
-  </div>
-</div>
+<main id="app"></main>
+<div class="toast" id="toast"></div>
 
 <script>
-  const cityInput = document.getElementById('cityInput');
-  const searchBtn = document.getElementById('searchBtn');
-  const statusEl = document.getElementById('status');
-  const loaderEl = document.getElementById('loader');
-  const weatherCard = document.getElementById('weatherCard');
+/* =========================================================
+   MODULE 1: DATA STORE
+   In a real deployment this would call a backend API.
+   Kept as a static module here so the app needs zero
+   external dependencies / API keys to run anywhere.
+========================================================= */
+const ProductStore = (() => {
+  const products = [
+    { id: 1, name: "Wireless Headphones", category: "Electronics", price: 2499, img: "https://picsum.photos/seed/p1/400/300", desc: "Over-ear wireless headphones with noise cancellation and 30hr battery life." },
+    { id: 2, name: "Smart Watch", category: "Electronics", price: 4999, img: "https://picsum.photos/seed/p2/400/300", desc: "Fitness tracking smart watch with heart-rate monitor and AMOLED display." },
+    { id: 3, name: "Running Shoes", category: "Footwear", price: 1899, img: "https://picsum.photos/seed/p3/400/300", desc: "Lightweight breathable running shoes with cushioned sole." },
+    { id: 4, name: "Leather Backpack", category: "Bags", price: 1599, img: "https://picsum.photos/seed/p4/400/300", desc: "Premium leather backpack with laptop compartment, fits up to 15.6 inches." },
+    { id: 5, name: "Bluetooth Speaker", category: "Electronics", price: 1299, img: "https://picsum.photos/seed/p5/400/300", desc: "Portable waterproof speaker with deep bass and 12hr playback." },
+    { id: 6, name: "Cotton T-Shirt", category: "Clothing", price: 499, img: "https://picsum.photos/seed/p6/400/300", desc: "100% cotton, breathable everyday t-shirt available in multiple colors." },
+    { id: 7, name: "Office Chair", category: "Furniture", price: 5999, img: "https://picsum.photos/seed/p7/400/300", desc: "Ergonomic office chair with lumbar support and adjustable height." },
+    { id: 8, name: "Coffee Maker", category: "Home", price: 2299, img: "https://picsum.photos/seed/p8/400/300", desc: "Automatic drip coffee maker with built-in grinder, 6-cup capacity." },
+    { id: 9, name: "Yoga Mat", category: "Fitness", price: 699, img: "https://picsum.photos/seed/p9/400/300", desc: "Non-slip eco-friendly yoga mat, 6mm thick for extra comfort." },
+    { id: 10, name: "Desk Lamp", category: "Home", price: 899, img: "https://picsum.photos/seed/p10/400/300", desc: "LED desk lamp with 3 brightness modes and USB charging port." },
+    { id: 11, name: "Sunglasses", category: "Accessories", price: 1199, img: "https://picsum.photos/seed/p11/400/300", desc: "UV-protection polarized sunglasses with lightweight frame." },
+    { id: 12, name: "Gaming Mouse", category: "Electronics", price: 1499, img: "https://picsum.photos/seed/p12/400/300", desc: "RGB gaming mouse with 6 programmable buttons and high DPI sensor." },
+  ];
 
-  // Weather code -> description mapping (Open-Meteo WMO codes)
-  const weatherDescriptions = {
-    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-    45: "Fog", 48: "Freezing fog",
-    51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
-    61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
-    71: "Light snow", 73: "Moderate snow", 75: "Heavy snow",
-    80: "Rain showers", 81: "Moderate showers", 82: "Violent showers",
-    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Severe thunderstorm"
+  // simulate async fetch (mirrors a real REST API call pattern)
+  const getAll = () => new Promise(resolve => setTimeout(() => resolve(products), 250));
+  const getById = (id) => new Promise(resolve =>
+    setTimeout(() => resolve(products.find(p => p.id === Number(id))), 150)
+  );
+  const getCategories = () => [...new Set(products.map(p => p.category))];
+
+  return { getAll, getById, getCategories };
+})();
+
+/* =========================================================
+   MODULE 2: CART (state management)
+========================================================= */
+const Cart = (() => {
+  let items = JSON.parse(sessionStorage.getItem('cart') || '[]');
+
+  const save = () => sessionStorage.setItem('cart', JSON.stringify(items));
+
+  const add = (product, qty = 1) => {
+    const existing = items.find(i => i.id === product.id);
+    if (existing) existing.qty += qty;
+    else items.push({ ...product, qty });
+    save();
+    updateBadge();
+    showToast(`${product.name} added to cart`);
   };
 
-  function showLoading(isLoading) {
-    loaderEl.style.display = isLoading ? 'block' : 'none';
-  }
+  const remove = (id) => {
+    items = items.filter(i => i.id !== id);
+    save();
+    updateBadge();
+    render(); // re-render cart view if open
+  };
 
-  function showStatus(message, isError = false) {
-    statusEl.textContent = message;
-    statusEl.className = isError ? 'error' : '';
-  }
+  const getAll = () => items;
+  const getCount = () => items.reduce((sum, i) => sum + i.qty, 0);
+  const getTotal = () => items.reduce((sum, i) => sum + i.qty * i.price, 0);
+  const updateBadge = () => {
+    document.getElementById('cartBadge').textContent = getCount();
+  };
 
-  function clearStatus() {
-    statusEl.textContent = '';
-    statusEl.className = '';
-  }
+  return { add, remove, getAll, getCount, getTotal, updateBadge };
+})();
 
-  // Step 1: Get latitude/longitude from city name (Geocoding API)
-  async function getCoordinates(city) {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
-    const response = await fetch(url);
+/* =========================================================
+   MODULE 3: ROUTER (client-side routing, no page reload)
+   Routes: '/'  -> catalog
+           '/product/:id' -> detail page
+           '/cart' -> cart page
+========================================================= */
+function navigateTo(path) {
+  window.location.hash = path;
+}
 
-    if (!response.ok) {
-      throw new Error(`Geocoding request failed (status ${response.status})`);
-    }
+function parseRoute() {
+  const hash = window.location.hash.slice(1) || '/';
+  const parts = hash.split('/').filter(Boolean);
+  if (parts.length === 0) return { name: 'home' };
+  if (parts[0] === 'product' && parts[1]) return { name: 'product', id: parts[1] };
+  if (parts[0] === 'cart') return { name: 'cart' };
+  return { name: 'home' };
+}
 
-    const data = await response.json();
+function setActiveNav(routeName) {
+  document.getElementById('navHome').classList.toggle('active', routeName === 'home' || routeName === 'product');
+  document.getElementById('navCart').classList.toggle('active', routeName === 'cart');
+}
 
-    if (!data.results || data.results.length === 0) {
-      throw new Error(`City "${city}" not found. Please check spelling.`);
-    }
+/* =========================================================
+   MODULE 4: VIEWS (render functions per route)
+========================================================= */
+const app = document.getElementById('app');
+let currentSearch = '';
+let currentCategory = '';
 
-    const place = data.results[0];
-    return {
-      lat: place.latitude,
-      lon: place.longitude,
-      name: place.name,
-      country: place.country || ''
-    };
-  }
+async function viewHome() {
+  app.innerHTML = `<div class="loader"></div>`;
+  const products = await ProductStore.getAll();
+  const categories = ProductStore.getCategories();
 
-  // Step 2: Get weather data using coordinates
-  async function getWeatherData(lat, lon) {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code,pressure_msl&timezone=auto`;
-    const response = await fetch(url);
+  app.innerHTML = `
+    <div class="search-bar">
+      <input id="searchInput" type="text" placeholder="Search products..." value="${currentSearch}">
+      <select id="categorySelect">
+        <option value="">All Categories</option>
+        ${categories.map(c => `<option value="${c}" ${c === currentCategory ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="grid" id="productGrid"></div>
+  `;
 
-    if (!response.ok) {
-      throw new Error(`Weather request failed (status ${response.status})`);
-    }
+  renderGrid(products);
 
-    const data = await response.json();
+  document.getElementById('searchInput').addEventListener('input', debounce((e) => {
+    currentSearch = e.target.value;
+    filterAndRender(products);
+  }, 250));
 
-    if (!data.current) {
-      throw new Error('Unexpected response format from weather server.');
-    }
-
-    return data.current;
-  }
-
-  // Step 3: Render weather data on dashboard
-  function renderWeather(locationInfo, current) {
-    document.getElementById('cityName').textContent =
-      `${locationInfo.name}${locationInfo.country ? ', ' + locationInfo.country : ''}`;
-
-    document.getElementById('temperature').textContent =
-      `${Math.round(current.temperature_2m)}°C`;
-
-    const desc = weatherDescriptions[current.weather_code] || 'Unknown conditions';
-    document.getElementById('description').textContent = desc;
-
-    document.getElementById('humidity').textContent =
-      `${current.relative_humidity_2m}%`;
-
-    document.getElementById('windSpeed').textContent =
-      `${current.wind_speed_10m} km/h`;
-
-    document.getElementById('feelsLike').textContent =
-      `${Math.round(current.apparent_temperature)}°C`;
-
-    document.getElementById('pressure').textContent =
-      `${Math.round(current.pressure_msl)} hPa`;
-
-    weatherCard.style.display = 'block';
-  }
-
-  // Main async function tying everything together
-  async function fetchWeatherForCity(city) {
-    if (!city || city.trim() === '') {
-      showStatus('Please enter a city name.', true);
-      return;
-    }
-
-    weatherCard.style.display = 'none';
-    clearStatus();
-    showLoading(true);
-
-    try {
-      const location = await getCoordinates(city.trim());
-      const current = await getWeatherData(location.lat, location.lon);
-      renderWeather(location, current);
-      clearStatus();
-    } catch (error) {
-      // Comprehensive error handling for failed network requests
-      console.error('Weather fetch error:', error);
-      if (error.message.includes('fetch') || error.name === 'TypeError') {
-        showStatus('Network error. Please check your internet connection.', true);
-      } else {
-        showStatus(error.message, true);
-      }
-    } finally {
-      showLoading(false);
-    }
-  }
-
-  searchBtn.addEventListener('click', () => {
-    fetchWeatherForCity(cityInput.value);
+  document.getElementById('categorySelect').addEventListener('change', (e) => {
+    currentCategory = e.target.value;
+    filterAndRender(products);
   });
+}
 
-  cityInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      fetchWeatherForCity(cityInput.value);
-    }
+function filterAndRender(products) {
+  const filtered = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(currentSearch.toLowerCase());
+    const matchesCategory = currentCategory ? p.category === currentCategory : true;
+    return matchesSearch && matchesCategory;
   });
+  renderGrid(filtered);
+}
 
-  // Load default city on page load
-  window.addEventListener('DOMContentLoaded', () => {
-    fetchWeatherForCity('Delhi');
-  });
+function renderGrid(products) {
+  const grid = document.getElementById('productGrid');
+  if (products.length === 0) {
+    grid.innerHTML = `<div class="empty-state">No products found.</div>`;
+    return;
+  }
+  grid.innerHTML = products.map(p => `
+    <div class="card" onclick="navigateTo('/product/${p.id}')">
+      <img src="${p.img}" alt="${p.name}" loading="lazy">
+      <div class="card-body">
+        <div class="cat">${p.category}</div>
+        <h3>${p.name}</h3>
+        <div class="price">₹${p.price}</div>
+        <button onclick="event.stopPropagation(); Cart.add(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add to Cart</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function viewProduct(id) {
+  app.innerHTML = `<div class="loader"></div>`;
+  const product = await ProductStore.getById(id);
+
+  if (!product) {
+    app.innerHTML = `<div class="empty-state">Product not found.<br><a class="back-link" onclick="navigateTo('/')">← Back to catalog</a></div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <a class="back-link" onclick="navigateTo('/')">← Back to catalog</a>
+    <div class="detail">
+      <img src="${product.img}" alt="${product.name}">
+      <div>
+        <div class="cat" style="color:var(--primary);font-weight:bold;font-size:12px;">${product.category.toUpperCase()}</div>
+        <h2>${product.name}</h2>
+        <div class="price">₹${product.price}</div>
+        <p class="desc">${product.desc}</p>
+        <div class="qty-row">
+          <button id="qtyMinus">−</button>
+          <span id="qtyValue">1</span>
+          <button id="qtyPlus">+</button>
+        </div>
+        <button class="add-btn" id="addBtn">Add to Cart</button>
+      </div>
+    </div>
+  `;
+
+  let qty = 1;
+  document.getElementById('qtyMinus').onclick = () => {
+    if (qty > 1) qty--;
+    document.getElementById('qtyValue').textContent = qty;
+  };
+  document.getElementById('qtyPlus').onclick = () => {
+    qty++;
+    document.getElementById('qtyValue').textContent = qty;
+  };
+  document.getElementById('addBtn').onclick = () => Cart.add(product, qty);
+}
+
+function viewCart() {
+  const items = Cart.getAll();
+
+  if (items.length === 0) {
+    app.innerHTML = `
+      <div class="empty-state">
+        Your cart is empty.<br>
+        <a class="back-link" onclick="navigateTo('/')">← Browse products</a>
+      </div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <h2 style="margin-bottom:16px;">Your Cart</h2>
+    ${items.map(i => `
+      <div class="cart-item">
+        <img src="${i.img}" alt="${i.name}" loading="lazy">
+        <div class="info">
+          <h4>${i.name}</h4>
+          <div class="price">₹${i.price} × ${i.qty}</div>
+        </div>
+        <button class="remove" onclick="Cart.remove(${i.id})">Remove</button>
+      </div>
+    `).join('')}
+    <div class="cart-total">Total: ₹${Cart.getTotal()}</div>
+  `;
+}
+
+/* =========================================================
+   MODULE 5: HELPERS
+========================================================= */
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+/* =========================================================
+   ROUTER DRIVER: re-renders on every hash change
+========================================================= */
+function render() {
+  const route = parseRoute();
+  setActiveNav(route.name);
+  if (route.name === 'home') viewHome();
+  else if (route.name === 'product') viewProduct(route.id);
+  else if (route.name === 'cart') viewCart();
+}
+
+window.addEventListener('hashchange', render);
+window.addEventListener('DOMContentLoaded', () => {
+  Cart.updateBadge();
+  render();
+});
 </script>
-
 </body>
 </html>
-
-
-
-
